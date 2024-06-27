@@ -1,0 +1,344 @@
+{
+  "name": "create",
+  "description": "",
+  "version": 3,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "clock",
+    "name": "scheduled_event",
+    "as": "3957ecb2",
+    "title": null,
+    "description": "<span class=\"provider\">Trigger</span> every 500 minutes",
+    "keyword": "trigger",
+    "input": {
+      "time_unit": "minutes",
+      "trigger_every": "500"
+    },
+    "extended_input_schema": [
+      {
+        "control_type": "integer",
+        "default": "5",
+        "enforce_template_mode": true,
+        "extends_schema": true,
+        "hint": "Define repeating schedule. Enter whole numbers only.\n                        This field can be set to a minimum of 5 minutes.",
+        "label": "Trigger every",
+        "name": "trigger_every",
+        "optional": false,
+        "suffix": {
+          "text": "minutes"
+        },
+        "type": "string"
+      },
+      {
+        "control_type": "select",
+        "hint": "Select the timezone to use. Leave it blank to use <b>{{authUser.timezone}}</b>",
+        "label": "Timezone",
+        "name": "timezone",
+        "optional": true,
+        "pick_list": "timezone_id_global_pick_list",
+        "pick_list_connection_less": true,
+        "type": "string"
+      },
+      {
+        "control_type": "date_time",
+        "enforce_template_mode": true,
+        "extends_schema": true,
+        "hint": "Set date and time to start or leave blank to start immediately. <b>Once recipe has been run or tested, value cannot be changed.</b>",
+        "label": "Start after",
+        "name": "start_after",
+        "optional": true,
+        "parse_output": "date_time_conversion",
+        "since_field": true,
+        "type": "date_time",
+        "ignore_timezone": true,
+        "render_input": "date_time_conversion"
+      }
+    ],
+    "block": [
+      {
+        "number": 1,
+        "provider": "ftps",
+        "name": "get_file_content",
+        "as": "3954ec09",
+        "keyword": "action",
+        "input": {
+          "file_name": "/akash/input/account.json"
+        },
+        "uuid": "3aedde7b-b014-49bd-b075-c7cda0b8d97f"
+      },
+      {
+        "number": 2,
+        "provider": "json_parser",
+        "name": "parse_json",
+        "as": "b532b714",
+        "title": null,
+        "description": null,
+        "keyword": "action",
+        "input": {
+          "sample_document": "{\n \"Name\":\"\",\n \"City\" : \"\",\n \"Country\" :\"\"\n}",
+          "document": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"ftps\",\"line\":\"3954ec09\",\"path\":[\"contents\"]}')}"
+        },
+        "extended_output_schema": [
+          {
+            "label": "Document",
+            "name": "document",
+            "properties": [
+              {
+                "control_type": "text",
+                "label": "Name",
+                "type": "string",
+                "name": "Name"
+              },
+              {
+                "control_type": "text",
+                "label": "City",
+                "type": "string",
+                "name": "City"
+              },
+              {
+                "control_type": "text",
+                "label": "Country",
+                "type": "string",
+                "name": "Country"
+              }
+            ],
+            "type": "object"
+          }
+        ],
+        "extended_input_schema": [
+          {
+            "label": "Edit schema",
+            "name": "edit_schema",
+            "optional": true,
+            "properties": [
+              {
+                "control_type": "multiselect",
+                "label": "Override fields",
+                "pick_list": [
+                  [
+                    "document > Name",
+                    "document__sep__Name"
+                  ],
+                  [
+                    "document > City",
+                    "document__sep__City"
+                  ],
+                  [
+                    "document > Country",
+                    "document__sep__Country"
+                  ]
+                ],
+                "optional": true,
+                "extends_schema": true,
+                "type": "string",
+                "name": "override_fields_picklist"
+              }
+            ],
+            "sticky": false,
+            "type": "object"
+          }
+        ],
+        "uuid": "3a17f699-acb4-4421-921c-d3f7418ad07d"
+      },
+      {
+        "number": 3,
+        "provider": "amazon_s3",
+        "name": "upload_file",
+        "as": "7f752cde",
+        "title": null,
+        "description": null,
+        "keyword": "action",
+        "dynamicPickListSelection": {
+          "bucket": "eaiesb"
+        },
+        "input": {
+          "accelerate": "false",
+          "bucket": "eaiesb",
+          "object_name": "akash_#{_dp('{\"pill_type\":\"job_context\",\"path\":[\"job_created_at\"]}')}.json",
+          "file": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"ftps\",\"line\":\"3954ec09\",\"path\":[\"contents\"]}')}"
+        },
+        "extended_input_schema": [
+          {
+            "control_type": "select",
+            "hint": "Select bucket to monitor",
+            "label": "Bucket name",
+            "name": "bucket",
+            "optional": false,
+            "pick_list": "buckets",
+            "toggle_field": {
+              "name": "bucket",
+              "label": "Bucket name",
+              "toggle_hint": "Use bucket name",
+              "type": "string",
+              "control_type": "text",
+              "hint": "Name of bucket to monitor. For example, <b>folder001</b>. The rest of the relative path has to be specified in <b>Object name</b>."
+            },
+            "toggle_hint": "Select a bucket",
+            "type": "string"
+          },
+          {
+            "control_type": "text",
+            "hint": "Folder path of the object from the bucket to monitor. For example, <b>subfolder001/subfolder002/subfolder003/</b>. Ensure this to be exact, as name of object/file is case-sensitive. Refer to <a href='https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-prefixes.html' target='_blank'>AWS prefix docs</a> for more information.",
+            "label": "Object name",
+            "name": "object_name",
+            "optional": false,
+            "type": "string"
+          },
+          {
+            "change_on_blur": true,
+            "control_type": "text",
+            "hint": "Go to <b>Bucket</b>><b>Properties</b>><b>Static website hosting</b> to find your region in the 'Endpoint' URL, e.g. <b>us-west-2</b>. Can be left blank if region is already specified in connection. Use this field to override the region set at connection level.",
+            "label": "Region",
+            "name": "region",
+            "optional": true,
+            "sticky": false,
+            "type": "string"
+          },
+          {
+            "control_type": "text",
+            "hint": "The file contents to upload",
+            "label": "Contents",
+            "name": "file",
+            "optional": true,
+            "sticky": true,
+            "type": "string"
+          },
+          {
+            "control_type": "number",
+            "default": "false",
+            "hint": "                Default is <b>false</b>. Enter <b>true</b> to use accelerated endpoint.\n                Go to <b>Bucket</b>><b>Properties</b>><b>Transfer acceleration</b> to check if accelerated endpoint is enabled\n",
+            "label": "Use accelerated endpoint",
+            "name": "accelerate",
+            "optional": true,
+            "parse_output": "float_conversion",
+            "sticky": true,
+            "type": "number"
+          },
+          {
+            "control_type": "text",
+            "hint": "                The Content-Type metadata to be attached to the file when uploading. Default is \"multipart/form-data\".\n",
+            "label": "Content-Type metadata",
+            "name": "content_type",
+            "optional": true,
+            "type": "string"
+          },
+          {
+            "control_type": "select",
+            "hint": "                Learn more about canned ACL\n                <a href=\"https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl\" target=\"_blank\">here</a>.\n",
+            "label": "Canned ACL",
+            "name": "canned_permission",
+            "optional": true,
+            "pick_list": [
+              [
+                "Private",
+                "private"
+              ],
+              [
+                "Public  read",
+                "public-read"
+              ],
+              [
+                "Public  read  write",
+                "public-read-write"
+              ],
+              [
+                "AW s  exec  read",
+                "aws-exec-read"
+              ],
+              [
+                "Authenticated  read",
+                "authenticated-read"
+              ],
+              [
+                "Bucket  owner  read",
+                "bucket-owner-read"
+              ],
+              [
+                "Bucket  owner  full  control",
+                "bucket-owner-full-control"
+              ],
+              [
+                "Log  delivery  write",
+                "log-delivery-write"
+              ]
+            ],
+            "sticky": true,
+            "toggle_field": {
+              "type": "array",
+              "name": "explicit_permissions",
+              "label": "Explicit permissions",
+              "control_type": "key_value",
+              "optional": true,
+              "toggle_hint": "Use explicit permissions",
+              "empty_list_title": "Does this HTTP request require headers?",
+              "empty_list_text": "Refer to the API documentation and add required headers to this HTTP request",
+              "item_label": "Header",
+              "properties": [
+                {
+                  "name": "name",
+                  "label": "Permission name"
+                },
+                {
+                  "name": "value",
+                  "label": "Grantee",
+                  "placeholder": "Email, user ID or group URI"
+                }
+              ],
+              "hint": "                  Learn more about Access Control List (ACL) specific request headers\n                  <a href=\"https://docs.aws.amazon.com/AmazonS3/latest/API/archive-RESTObjectPUTacl.html\" target=\"_blank\">here</a>.\n"
+            },
+            "toggle_hint": "Select canned ACL",
+            "type": "string"
+          }
+        ],
+        "uuid": "ae8b8ab4-f4a9-4b60-af96-6c5c58a595ff"
+      },
+      {
+        "number": 4,
+        "as": "9bd2f0ee",
+        "keyword": "stop",
+        "input": {
+          "stop_with_error": "false"
+        },
+        "uuid": "bb14d35b-1aa1-4e73-a138-218d03541bfb"
+      }
+    ],
+    "uuid": "b9726225-a1d0-4632-ae4a-2899f240ef59",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "clock",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "ftps",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "akash/my_ftp_ftps_account.connection.json",
+        "name": "My FTP/FTPS account",
+        "folder": "akash"
+      }
+    },
+    {
+      "keyword": "application",
+      "provider": "json_parser",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "amazon_s3",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "my_amazon_s3_account.connection.json",
+        "name": "My Amazon S3 account",
+        "folder": ""
+      }
+    }
+  ]
+}

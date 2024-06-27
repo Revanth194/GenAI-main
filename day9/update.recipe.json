@@ -1,0 +1,958 @@
+{
+  "name": "update",
+  "description": "",
+  "version": 6,
+  "private": true,
+  "concurrency": 1,
+  "code": {
+    "number": 0,
+    "provider": "clock",
+    "name": "scheduled_event",
+    "as": "04773086",
+    "title": null,
+    "description": "<span class=\"provider\">Trigger</span> every 500 minutes",
+    "keyword": "trigger",
+    "input": {
+      "time_unit": "minutes",
+      "trigger_every": "500"
+    },
+    "extended_input_schema": [
+      {
+        "control_type": "integer",
+        "default": "5",
+        "enforce_template_mode": true,
+        "extends_schema": true,
+        "hint": "Define repeating schedule. Enter whole numbers only.\n                        This field can be set to a minimum of 5 minutes.",
+        "label": "Trigger every",
+        "name": "trigger_every",
+        "optional": false,
+        "suffix": {
+          "text": "minutes"
+        },
+        "type": "string"
+      },
+      {
+        "control_type": "select",
+        "hint": "Select the timezone to use. Leave it blank to use <b>{{authUser.timezone}}</b>",
+        "label": "Timezone",
+        "name": "timezone",
+        "optional": true,
+        "pick_list": "timezone_id_global_pick_list",
+        "pick_list_connection_less": true,
+        "type": "string"
+      },
+      {
+        "control_type": "date_time",
+        "enforce_template_mode": true,
+        "extends_schema": true,
+        "hint": "Set date and time to start or leave blank to start immediately. <b>Once recipe has been run or tested, value cannot be changed.</b>",
+        "label": "Start after",
+        "name": "start_after",
+        "optional": true,
+        "parse_output": "date_time_conversion",
+        "since_field": true,
+        "type": "date_time",
+        "ignore_timezone": true,
+        "render_input": "date_time_conversion"
+      }
+    ],
+    "block": [
+      {
+        "number": 1,
+        "provider": "ftps",
+        "name": "get_file_content",
+        "as": "67cbbe4a",
+        "keyword": "action",
+        "input": {
+          "file_name": "/akash/input/update.json"
+        },
+        "uuid": "25e47218-15c4-4422-a8a8-360529b37c80"
+      },
+      {
+        "number": 2,
+        "provider": "json_parser",
+        "name": "parse_json",
+        "as": "06bd1dfd",
+        "title": null,
+        "description": null,
+        "keyword": "action",
+        "input": {
+          "sample_document": "{\n \"Name\":\" \",\n \"City\" : \"\",\n \"Country\" :\"\"\n}",
+          "document": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"ftps\",\"line\":\"67cbbe4a\",\"path\":[\"contents\"]}')}"
+        },
+        "extended_output_schema": [
+          {
+            "label": "Document",
+            "name": "document",
+            "properties": [
+              {
+                "control_type": "text",
+                "label": "Name",
+                "type": "string",
+                "name": "Name"
+              },
+              {
+                "control_type": "text",
+                "label": "City",
+                "type": "string",
+                "name": "City"
+              },
+              {
+                "control_type": "text",
+                "label": "Country",
+                "type": "string",
+                "name": "Country"
+              }
+            ],
+            "type": "object"
+          }
+        ],
+        "extended_input_schema": [
+          {
+            "label": "Edit schema",
+            "name": "edit_schema",
+            "optional": true,
+            "properties": [
+              {
+                "control_type": "multiselect",
+                "label": "Override fields",
+                "pick_list": [
+                  [
+                    "document > Name",
+                    "document__sep__Name"
+                  ],
+                  [
+                    "document > City",
+                    "document__sep__City"
+                  ],
+                  [
+                    "document > Country",
+                    "document__sep__Country"
+                  ]
+                ],
+                "optional": true,
+                "extends_schema": true,
+                "type": "string",
+                "name": "override_fields_picklist"
+              }
+            ],
+            "sticky": false,
+            "type": "object"
+          }
+        ],
+        "uuid": "df43eca2-9efb-465c-9024-449c55dc2966"
+      },
+      {
+        "number": 3,
+        "provider": "salesforce",
+        "name": "update_sobject",
+        "as": "4474d284",
+        "title": "Update Account",
+        "description": "Update <span class=\"provider\">Account</span> in <span class=\"provider\">Salesforce</span>",
+        "keyword": "action",
+        "dynamicPickListSelection": {
+          "sobject_name": "Account"
+        },
+        "input": {
+          "sobject_name": "Account",
+          "id": "001dM000008TfI5QAK",
+          "Name": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"json_parser\",\"line\":\"06bd1dfd\",\"path\":[\"document\",\"Name\"]}')}",
+          "BillingCity": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"json_parser\",\"line\":\"06bd1dfd\",\"path\":[\"document\",\"City\"]}')}",
+          "BillingCountry": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"json_parser\",\"line\":\"06bd1dfd\",\"path\":[\"document\",\"Country\"]}')}"
+        },
+        "extended_input_schema": [
+          {
+            "control_type": "text",
+            "hint": "Salesforce internal ID of Account to update",
+            "label": "Account ID",
+            "name": "id",
+            "type": "string",
+            "key_scope": "account"
+          },
+          {
+            "control_type": "text-area",
+            "custom": false,
+            "label": "Account Description",
+            "name": "Description",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "phone",
+            "custom": false,
+            "label": "Account Fax",
+            "name": "Fax",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "Account Name",
+            "name": "Name",
+            "optional": true,
+            "type": "string",
+            "event_title": true,
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "Account Number",
+            "name": "AccountNumber",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "phone",
+            "custom": false,
+            "label": "Account Phone",
+            "name": "Phone",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "select",
+            "custom": false,
+            "label": "Account Rating",
+            "name": "Rating",
+            "optional": true,
+            "pick_list": "sobject_field_values_list",
+            "pick_list_params": {
+              "sobject_name": "\"Account\"",
+              "field_name": "\"Rating\""
+            },
+            "toggle_field": {
+              "control_type": "text",
+              "label": "Account Rating",
+              "toggle_hint": "Enter custom value",
+              "optional": true,
+              "custom": false,
+              "sfdc_createable": true,
+              "sfdc_updateable": true,
+              "type": "string",
+              "name": "Rating"
+            },
+            "toggle_hint": "Select from list",
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "Account Site",
+            "name": "Site",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "select",
+            "custom": false,
+            "label": "Account Source",
+            "name": "AccountSource",
+            "optional": true,
+            "pick_list": "sobject_field_values_list",
+            "pick_list_params": {
+              "sobject_name": "\"Account\"",
+              "field_name": "\"AccountSource\""
+            },
+            "toggle_field": {
+              "control_type": "text",
+              "label": "Account Source",
+              "toggle_hint": "Enter custom value",
+              "optional": true,
+              "custom": false,
+              "sfdc_createable": true,
+              "sfdc_updateable": true,
+              "type": "string",
+              "name": "AccountSource"
+            },
+            "toggle_hint": "Select from list",
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "select",
+            "custom": false,
+            "label": "Account Type",
+            "name": "Type",
+            "optional": true,
+            "pick_list": "sobject_field_values_list",
+            "pick_list_params": {
+              "sobject_name": "\"Account\"",
+              "field_name": "\"Type\""
+            },
+            "toggle_field": {
+              "control_type": "text",
+              "label": "Account Type",
+              "toggle_hint": "Enter custom value",
+              "optional": true,
+              "custom": false,
+              "sfdc_createable": true,
+              "sfdc_updateable": true,
+              "type": "string",
+              "name": "Type"
+            },
+            "toggle_hint": "Select from list",
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "number",
+            "custom": false,
+            "label": "Annual Revenue",
+            "name": "AnnualRevenue",
+            "optional": true,
+            "parse_output": "float_conversion",
+            "type": "number",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "Billing City",
+            "name": "BillingCity",
+            "optional": true,
+            "sticky": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "Billing Country",
+            "name": "BillingCountry",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "select",
+            "custom": false,
+            "label": "Billing Geocode Accuracy",
+            "name": "BillingGeocodeAccuracy",
+            "optional": true,
+            "pick_list": "sobject_field_values_list",
+            "pick_list_params": {
+              "sobject_name": "\"Account\"",
+              "field_name": "\"BillingGeocodeAccuracy\""
+            },
+            "toggle_field": {
+              "control_type": "text",
+              "label": "Billing Geocode Accuracy",
+              "toggle_hint": "Enter custom value",
+              "optional": true,
+              "custom": false,
+              "sfdc_createable": true,
+              "sfdc_updateable": true,
+              "type": "string",
+              "name": "BillingGeocodeAccuracy"
+            },
+            "toggle_hint": "Select from list",
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "number",
+            "custom": false,
+            "label": "Billing Latitude",
+            "name": "BillingLatitude",
+            "optional": true,
+            "parse_output": "float_conversion",
+            "type": "number",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "number",
+            "custom": false,
+            "label": "Billing Longitude",
+            "name": "BillingLongitude",
+            "optional": true,
+            "parse_output": "float_conversion",
+            "type": "number",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "Billing State/Province",
+            "name": "BillingState",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text-area",
+            "custom": false,
+            "label": "Billing Street",
+            "name": "BillingStreet",
+            "optional": true,
+            "sticky": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "Billing Zip/Postal Code",
+            "name": "BillingPostalCode",
+            "optional": true,
+            "sticky": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "select",
+            "custom": false,
+            "label": "Clean Status",
+            "name": "CleanStatus",
+            "optional": true,
+            "pick_list": "sobject_field_values_list",
+            "pick_list_params": {
+              "sobject_name": "\"Account\"",
+              "field_name": "\"CleanStatus\""
+            },
+            "toggle_field": {
+              "control_type": "text",
+              "label": "Clean Status",
+              "toggle_hint": "Enter custom value",
+              "optional": true,
+              "custom": false,
+              "sfdc_createable": true,
+              "sfdc_updateable": true,
+              "type": "string",
+              "name": "CleanStatus"
+            },
+            "toggle_hint": "Select from list",
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "D&B Company ID",
+            "name": "DandbCompanyId",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "D-U-N-S Number",
+            "name": "DunsNumber",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "Data.com Key",
+            "name": "Jigsaw",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "number",
+            "custom": false,
+            "label": "Employees",
+            "name": "NumberOfEmployees",
+            "optional": true,
+            "parse_output": "integer_conversion",
+            "type": "integer",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "select",
+            "custom": false,
+            "label": "Industry",
+            "name": "Industry",
+            "optional": true,
+            "pick_list": "sobject_field_values_list",
+            "pick_list_params": {
+              "sobject_name": "\"Account\"",
+              "field_name": "\"Industry\""
+            },
+            "toggle_field": {
+              "control_type": "text",
+              "label": "Industry",
+              "toggle_hint": "Enter custom value",
+              "optional": true,
+              "custom": false,
+              "sfdc_createable": true,
+              "sfdc_updateable": true,
+              "type": "string",
+              "name": "Industry"
+            },
+            "toggle_hint": "Select from list",
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "NAICS Code",
+            "name": "NaicsCode",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "NAICS Description",
+            "name": "NaicsDesc",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "Operating Hour ID",
+            "name": "OperatingHoursId",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "Owner ID",
+            "name": "OwnerId",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "select",
+            "custom": false,
+            "label": "Ownership",
+            "name": "Ownership",
+            "optional": true,
+            "pick_list": "sobject_field_values_list",
+            "pick_list_params": {
+              "sobject_name": "\"Account\"",
+              "field_name": "\"Ownership\""
+            },
+            "toggle_field": {
+              "control_type": "text",
+              "label": "Ownership",
+              "toggle_hint": "Enter custom value",
+              "optional": true,
+              "custom": false,
+              "sfdc_createable": true,
+              "sfdc_updateable": true,
+              "type": "string",
+              "name": "Ownership"
+            },
+            "toggle_hint": "Select from list",
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "Parent Account ID",
+            "name": "ParentId",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "SIC Code",
+            "name": "Sic",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "SIC Description",
+            "name": "SicDesc",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "Shipping City",
+            "name": "ShippingCity",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "Shipping Country",
+            "name": "ShippingCountry",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "select",
+            "custom": false,
+            "label": "Shipping Geocode Accuracy",
+            "name": "ShippingGeocodeAccuracy",
+            "optional": true,
+            "pick_list": "sobject_field_values_list",
+            "pick_list_params": {
+              "sobject_name": "\"Account\"",
+              "field_name": "\"ShippingGeocodeAccuracy\""
+            },
+            "toggle_field": {
+              "control_type": "text",
+              "label": "Shipping Geocode Accuracy",
+              "toggle_hint": "Enter custom value",
+              "optional": true,
+              "custom": false,
+              "sfdc_createable": true,
+              "sfdc_updateable": true,
+              "type": "string",
+              "name": "ShippingGeocodeAccuracy"
+            },
+            "toggle_hint": "Select from list",
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "number",
+            "custom": false,
+            "label": "Shipping Latitude",
+            "name": "ShippingLatitude",
+            "optional": true,
+            "parse_output": "float_conversion",
+            "type": "number",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "number",
+            "custom": false,
+            "label": "Shipping Longitude",
+            "name": "ShippingLongitude",
+            "optional": true,
+            "parse_output": "float_conversion",
+            "type": "number",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "Shipping State/Province",
+            "name": "ShippingState",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text-area",
+            "custom": false,
+            "label": "Shipping Street",
+            "name": "ShippingStreet",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "Shipping Zip/Postal Code",
+            "name": "ShippingPostalCode",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "Ticker Symbol",
+            "name": "TickerSymbol",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "Tradestyle",
+            "name": "Tradestyle",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "url",
+            "custom": false,
+            "label": "Website",
+            "name": "Website",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": false,
+            "label": "Year Started",
+            "name": "YearStarted",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "select",
+            "custom": true,
+            "label": "Active",
+            "name": "Active__c",
+            "optional": true,
+            "pick_list": "sobject_field_values_list",
+            "pick_list_params": {
+              "sobject_name": "\"Account\"",
+              "field_name": "\"Active__c\""
+            },
+            "toggle_field": {
+              "control_type": "text",
+              "label": "Active",
+              "toggle_hint": "Enter custom value",
+              "optional": true,
+              "custom": true,
+              "sfdc_createable": true,
+              "sfdc_updateable": true,
+              "type": "string",
+              "name": "Active__c"
+            },
+            "toggle_hint": "Select from list",
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "select",
+            "custom": true,
+            "label": "Customer Priority",
+            "name": "CustomerPriority__c",
+            "optional": true,
+            "pick_list": "sobject_field_values_list",
+            "pick_list_params": {
+              "sobject_name": "\"Account\"",
+              "field_name": "\"CustomerPriority__c\""
+            },
+            "toggle_field": {
+              "control_type": "text",
+              "label": "Customer Priority",
+              "toggle_hint": "Enter custom value",
+              "optional": true,
+              "custom": true,
+              "sfdc_createable": true,
+              "sfdc_updateable": true,
+              "type": "string",
+              "name": "CustomerPriority__c"
+            },
+            "toggle_hint": "Select from list",
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "number",
+            "custom": true,
+            "label": "Number of Locations",
+            "name": "NumberofLocations__c",
+            "optional": true,
+            "parse_output": "float_conversion",
+            "type": "number",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "select",
+            "custom": true,
+            "label": "SLA",
+            "name": "SLA__c",
+            "optional": true,
+            "pick_list": "sobject_field_values_list",
+            "pick_list_params": {
+              "sobject_name": "\"Account\"",
+              "field_name": "\"SLA__c\""
+            },
+            "toggle_field": {
+              "control_type": "text",
+              "label": "SLA",
+              "toggle_hint": "Enter custom value",
+              "optional": true,
+              "custom": true,
+              "sfdc_createable": true,
+              "sfdc_updateable": true,
+              "type": "string",
+              "name": "SLA__c"
+            },
+            "toggle_hint": "Select from list",
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "date",
+            "custom": true,
+            "label": "SLA Expiration Date",
+            "name": "SLAExpirationDate__c",
+            "optional": true,
+            "parse_output": "parse_iso8601_date",
+            "type": "date_time",
+            "render_input": "render_iso8601_date",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "text",
+            "custom": true,
+            "label": "SLA Serial Number",
+            "name": "SLASerialNumber__c",
+            "optional": true,
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          },
+          {
+            "control_type": "select",
+            "custom": true,
+            "label": "Upsell Opportunity",
+            "name": "UpsellOpportunity__c",
+            "optional": true,
+            "pick_list": "sobject_field_values_list",
+            "pick_list_params": {
+              "sobject_name": "\"Account\"",
+              "field_name": "\"UpsellOpportunity__c\""
+            },
+            "toggle_field": {
+              "control_type": "text",
+              "label": "Upsell Opportunity",
+              "toggle_hint": "Enter custom value",
+              "optional": true,
+              "custom": true,
+              "sfdc_createable": true,
+              "sfdc_updateable": true,
+              "type": "string",
+              "name": "UpsellOpportunity__c"
+            },
+            "toggle_hint": "Select from list",
+            "type": "string",
+            "sfdc_createable": true,
+            "sfdc_updateable": true
+          }
+        ],
+        "visible_config_fields": [
+          "sobject_name",
+          "BillingCity",
+          "BillingStreet",
+          "BillingPostalCode",
+          "Name",
+          "id",
+          "BillingCountry"
+        ],
+        "uuid": "aaee7f59-9e35-4c45-900d-7fc910555219"
+      },
+      {
+        "number": 4,
+        "as": "a412abf8",
+        "keyword": "stop",
+        "input": {
+          "stop_with_error": "false"
+        },
+        "uuid": "cc011beb-655d-4fe7-a68a-57a473dd053c"
+      }
+    ],
+    "uuid": "156c0c16-e6c3-4eaf-ad6e-2db9a5a51680",
+    "unfinished": false
+  },
+  "config": [
+    {
+      "keyword": "application",
+      "provider": "clock",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "ftps",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "akash/my_ftp_ftps_account.connection.json",
+        "name": "My FTP/FTPS account",
+        "folder": "akash"
+      }
+    },
+    {
+      "keyword": "application",
+      "provider": "json_parser",
+      "skip_validation": false,
+      "account_id": null
+    },
+    {
+      "keyword": "application",
+      "provider": "salesforce",
+      "skip_validation": false,
+      "account_id": {
+        "zip_name": "my_salesforce_account.connection.json",
+        "name": "My Salesforce account",
+        "folder": ""
+      }
+    }
+  ]
+}
